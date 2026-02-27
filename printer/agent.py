@@ -64,6 +64,8 @@ def print_receipt(job_data):
         p._raw(b"\x1b\x45\x00")      # Bold Off
         p.text("QURILISH MOLLARI DO'KONI\n\n")
         
+        import textwrap
+
         # Info block
         p._raw(b"\x1b\x61\x00")      # Left align
         cashier = job_data.get('cashier') or job_data.get('seller_name') or job_data.get('seller') or 'admin'
@@ -87,15 +89,14 @@ def print_receipt(job_data):
         receipt_id_val = job_data.get('check_id') or job_data.get('receipt_id') or job_data.get('id', '-')
         
         p.text(f"SANA: {date_str}\n")
-        p.text(f"CHEK " + chr(252) + f": {receipt_id_val}\n\n")
+        p.text(f"CHEK No: {receipt_id_val}\n\n")
         
         # Table Header
         p._raw(b"\x1b\x45\x01")      # Bold On
-        header = "MAHSULOT"
-        header += " " * (WIDTH - len("MAHSULOT") - len("SONI") - len("SUMMA") - 2)
-        header += " SONI SUMMA"
+        header = "MAHSULOT".ljust(18) + "SONI".center(4) + "SUMMA".rjust(10)
         p.text(header + "\n")
         p._raw(b"\x1b\x45\x00")      # Bold Off
+        p.text(line('-'))
         
         # Items
         for item in job_data.get('items', []):
@@ -104,26 +105,27 @@ def print_receipt(job_data):
             total = float(item.get('total', 0))
             
             qty_str = str(int(quantity) if quantity.is_integer() else quantity)
-            total_str = money(total) + " so'm"
+            total_str = money(int(total) if total.is_integer() else total)
             
-            if len(name) > WIDTH:
-                p.text(f"{name[:WIDTH]}\n")
-            else:
-                p.text(f"{name}\n")
-            
-            space_middle = WIDTH - len(qty_str) - len(total_str) - 2
-            if space_middle < 1: space_middle = 1
-            
-            calc_line = (" " * max(0, WIDTH - len(qty_str) - len(total_str) - 4)) + qty_str + "    " + total_str
-            p.text(calc_line.rjust(WIDTH) + "\n")
+            name_lines = textwrap.wrap(name, width=17)
+            if not name_lines:
+                name_lines = [""]
+                
+            for i, nl in enumerate(name_lines):
+                if i == 0:
+                    line_str = nl.ljust(18) + qty_str.center(4) + total_str.rjust(10)
+                    p.text(line_str + "\n")
+                else:
+                    p.text(nl + "\n")
             
         p.text(line('-'))
-        p._raw(b"\x1b\x45\x01")      # Bold On
-        p.text(line('-'))            # Double Line for grand totals
         
         # Grand Total
+        p._raw(b"\x1b\x45\x01")      # Bold On
         total_amt = float(job_data.get('total_amount', 0))
-        subtotal_str = f"{money(total_amt)} so'm"
+        total_formatted = money(int(total_amt) if total_amt.is_integer() else total_amt)
+        subtotal_str = f"{total_formatted} so'm"
+        
         p._raw(b"\x1d\x21\x01")      # Double Height
         space = WIDTH - len("JAMI:") - len(subtotal_str)
         p.text(f"JAMI:{" " * max(1, space)}{subtotal_str}\n")
@@ -136,7 +138,6 @@ def print_receipt(job_data):
         # Footer Message
         p._raw(b"\x1b\x61\x01")      # Center
         p._raw(b"\x1b\x45\x01")      # Bold On
-        p._raw(b"\x1b\x4d\x01")      # Small Font? if supported.
         p.text("\nXaridingiz uchun rahmat!\n\n")
         
         p.text("Aloqa:\n")
