@@ -197,18 +197,18 @@ def main():
                         requests.post(f"{BACKEND_URL}/fail/{job_id}/", json={"error": error_msg})
                     
                 else:
-                    # Vazifa yo'q, jim turamiz (har 2 soniyada so'raydi)
-                    time.sleep(2)
+                    # Vazifa yo'q, jim turamiz (har 0.5 soniyada so'raydi)
+                    time.sleep(0.5)
             else:
                 print(f"⚠️ Server javobi g'alati: {resp.status_code} - {resp.text}")
-                time.sleep(5)
+                time.sleep(2)
                 
         except requests.exceptions.ConnectionError:
             print("❌ Serverga ulanib bo'lmadi (Backend ishlayaptimi?). Qayta urinish...")
-            time.sleep(5)
+            time.sleep(2)
         except Exception as e:
             print(f"❌ Kutilmagan xato: {e}")
-            time.sleep(5)
+            time.sleep(2)
 
 if __name__ == "__main__":
     main()
