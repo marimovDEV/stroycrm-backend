@@ -24,12 +24,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-wsyh+3##%q-2ak)6ryapisjch@*#8lv(g*u24ejps_0=i#hgey')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = True
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='stroymarket.pythonanywhere.com,localhost', cast=Csv())
+ALLOWED_HOSTS = ["84.54.28.96", "xoztovar.api.ardentsoft.uz"]
 
-CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool)
-CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='https://stroymarket-crm.vercel.app', cast=Csv())
+CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='https://stroymarket-crm.vercel.app', cast=Csv())
 
 
 

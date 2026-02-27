@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chek</title>
+    <style>
+        /* Asosiy reset */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            /* Printer uchun standart shriftlar */
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #525659;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .receipt {
+            background-color: white;
+            /* 58mm printer uchun aniq o'lcham (ba'zi printerlar 48mm bosadi) */
+            width: 58mm;
+            padding: 2mm 0;
+            /* Yonlardan joy qoldirmaymiz, qog'oz tor */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-size: 12px;
+            font-weight: bold;
+            /* Termal printerda bold yaxshiroq ko'rinadi */
+            color: #000;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .bold {
+            font-weight: 900;
+        }
+
+        .header {
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .shop-name {
+            font-size: 16px;
+            /* Nomi kattaroq */
+            font-weight: 900;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .divider {
+            border-top: 1px dashed #000;
+            margin: 5px 0;
+            width: 100%;
+        }
+
+        /* Tovar ro'yxati - Jadval ishlatish ishonchliroq */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td {
+            vertical-align: top;
+            padding: 1px 0;
+        }
+
+        .col-name {
+            text-align: left;
+            padding-right: 5px;
+            /* Orada masofa qolishi uchun */
+        }
+
+        .col-price {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 900;
+            font-size: 14px;
+            /* Jami katta va aniq bo'lsin */
+            margin-top: 5px;
+        }
+
+        .footer {
+            margin-top: 10px;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        /* Ekranda ko'rinadigan tugma */
+        .print-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .print-btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* === PRINTER SOZLAMALARI === */
+        @media print {
+            @page {
+                margin: 0;
+                /* Brauzer header/footerini (URL, sana) olib tashlaydi */
+                size: auto;
+            }
+
+            body {
+                background: none;
+                background-color: white;
+                padding: 0;
+                margin: 0;
+                display: block;
+            }
+
+            .receipt {
+                width: 100%;
+                max-width: 100%;
+                box-shadow: none;
+                padding: 0 1mm;
+                /* Chop etishda ozgina ichki joy */
+                margin: 0;
+            }
+
+            .print-btn {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <button onclick="window.print()" class="print-btn">🖨️ Chop etish</button>
+
+    <div class="receipt">
+        <div class="header">
+            <span class="shop-name">TASTE RADAR</span>
+            <div>Toshkent sh., Chilonzor</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="center bold">
+            STOL: 9 | CHEK #1234
+        </div>
+        <div class="center" id="date-time"></div>
+
+        <div class="divider"></div>
+
+        <div id="items-container">
+            <!-- Table will be injected here -->
+        </div>
+
+        <div class="divider"></div>
+
+        <div style="display: flex; justify-content: space-between;">
+            <span>Jami:</span>
+            <span id="subtotal">0</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+            <span>QQS (12%):</span>
+            <span id="qqs">0</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="total-row">
+            <span>JAMI:</span>
+            <span id="total">0</span>
+        </div>
+
+        <div class="footer">
+            <div>Xaridingiz uchun rahmat!</div>
+            <div>www.tasteradar.uz</div>
+        </div>
+    </div>
+
+    <script>
+        const now = new Date();
+        const dateStr = now.toLocaleDateString("ru-RU");
+        const timeStr = now.toLocaleTimeString("ru-RU", { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('date-time').innerText = `${dateStr} ${timeStr}`;
+
+        const items = [
+            { name: "Lager (3x)", price: 15750 },
+            { name: "Go'shtli pirog", price: 13500 },
+            { name: "Baliq va chips", price: 14950 },
+            { name: "Aralash gril", price: 18250 },
+            { name: "Qizil vino (2x)", price: 14000 },
+            { name: "Desert", price: 7950 },
+            { name: "Choy (Qora)", price: 2000 }
+        ];
+
+        const output = document.getElementById('items-container');
+        let subtotal = 0;
+
+        function formatMoney(amount) {
+            // "so'm" ni olib tashladim, joyni tejash uchun
+            return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+        }
+
+        // Jadval yaratish
+        let tableHtml = '<table>';
+        items.forEach(item => {
+            subtotal += item.price;
+            tableHtml += `
+                <tr>
+                    <td class="col-name">${item.name}</td>
+                    <td class="col-price">${formatMoney(item.price)}</td>
+                </tr>
+            `;
+        });
+        tableHtml += '</table>';
+        output.innerHTML = tableHtml;
+
+        const qqsRate = 0.12;
+        const qqs = Math.round(subtotal * qqsRate);
+        const total = subtotal + qqs;
+
+        document.getElementById('subtotal').innerText = formatMoney(subtotal);
+        document.getElementById('qqs').innerText = formatMoney(qqs);
+        document.getElementById('total').innerText = formatMoney(total) + " so'm";
+    </script>
+</body>
+
+</html>

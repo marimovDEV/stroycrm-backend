@@ -50,3 +50,31 @@ class AuditLog(models.Model):
 
     def __str__(self):
         return f"{self.timestamp} - {self.user} - {self.action_type}"
+
+
+import uuid
+
+class PrintJob(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Kutilmoqda'),
+        ('processing', 'Jarayonda'),
+        ('printed', 'Chop etildi'),
+        ('failed', 'Xatolik'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    sale = models.ForeignKey(
+        'sales.Sale', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='print_jobs'
+    )
+    data = models.JSONField(help_text="Chek ma'lumotlari (items, total, etc.)")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    printed_at = models.DateTimeField(null=True, blank=True)
+    error_message = models.TextField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"PrintJob {self.id} — {self.get_status_display()}"

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
-from .models import Employee, StoreSettings, AuditLog
+from .models import Employee, StoreSettings, AuditLog, PrintJob
 
 
 class EmployeeInline(admin.StackedInline):
@@ -39,9 +39,8 @@ class EmployeeAdmin(admin.ModelAdmin):
     list_display = ('user', 'role', 'position', 'pin', 'phone', 'salary', 'created_at')
     list_filter = ('role',)
     search_fields = ('user__username', 'user__first_name', 'pin', 'phone')
-    list_editable = ('pin',)  # PIN ni to'g'ridan-to'g'ri ro'yxatdan tahrirlash
+    list_editable = ('pin',)
     readonly_fields = ('created_at', 'updated_at')
-    fields = ('user', 'role', 'position', 'pin', 'phone', 'salary', 'created_at', 'updated_at')
 
     fieldsets = (
         ('Asosiy', {
@@ -69,17 +68,25 @@ class StoreSettingsAdmin(admin.ModelAdmin):
 
 @admin.register(AuditLog)
 class AuditLogAdmin(admin.ModelAdmin):
-    list_display = ('action', 'user', 'description', 'created_at')
-    list_filter = ('action',)
+    list_display = ('action_type', 'user', 'description', 'timestamp')
+    list_filter = ('action_type',)
     search_fields = ('user__username', 'description')
-    readonly_fields = ('action', 'user', 'description', 'created_at')
-    ordering = ('-created_at',)
+    readonly_fields = ('action_type', 'user', 'description', 'timestamp')
+    ordering = ('-timestamp',)
 
     def has_add_permission(self, request):
         return False
 
     def has_change_permission(self, request, obj=None):
         return False
+
+
+@admin.register(PrintJob)
+class PrintJobAdmin(admin.ModelAdmin):
+    list_display = ('id', 'sale', 'status', 'created_at', 'printed_at')
+    list_filter = ('status',)
+    readonly_fields = ('id', 'created_at', 'printed_at')
+    ordering = ('-created_at',)
 
 
 # User admin ni o'rniga bizniki

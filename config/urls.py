@@ -9,7 +9,7 @@ from customers.views import CustomerViewSet, DebtTransactionViewSet
 from sales.views import SaleViewSet, SaleItemViewSet, DashboardStatsView, ReportsView, AuditLogView
 from core.views import EmployeeViewSet, dashboard_stats, sales_report, user_profile, pin_login
 from core.reports_views import daily_sales_report, customer_debt_report, low_stock_report
-from core.print_views import add_print_job, poll_print_jobs, ack_print_job
+import core.print_views
 
 router = DefaultRouter()
 router.register(r'products', ProductViewSet)
@@ -53,7 +53,10 @@ urlpatterns = [
     path('api/reports/low-stock/', low_stock_report, name='reports-low-stock'),
     
     # Print Queue (Printer Agent uchun)
-    path('api/print/', add_print_job, name='print-add'),
-    path('api/print/poll/', poll_print_jobs, name='print-poll'),
-    path('api/print/ack/<str:job_id>/', ack_print_job, name='print-ack'),
+    path('api/print/', core.print_views.add_print_job, name='print-add'),
+    path('api/print/poll/', core.print_views.poll_print_jobs, name='print-poll'),
+    path('api/print/ack/<str:job_id>/', core.print_views.ack_print_job, name='print-ack'),
+    path('api/print/fail/<str:job_id>/', core.print_views.fail_print_job, name='print-fail'),
+    path('api/print/status/<str:job_id>/', core.print_views.check_print_status, name='print-status'),
+    path('api/print/jobs/', core.print_views.list_print_jobs, name='print-jobs'),
 ]
