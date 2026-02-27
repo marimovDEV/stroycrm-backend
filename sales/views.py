@@ -48,6 +48,9 @@ class SaleViewSet(viewsets.ModelViewSet):
         if not payment_method:
             return Response({'error': 'To\'lov turi talab qilinadi.'}, status=status.HTTP_400_BAD_REQUEST)
         
+        if payment_method == 'debt' and not sale.customer:
+            return Response({'error': 'Qarzga sotish uchun mijoz tanlangan bo\'lishi majburiy.'}, status=status.HTTP_400_BAD_REQUEST)
+        
         # Update Sale
         sale.status = 'completed'
         sale.payment_method = payment_method
