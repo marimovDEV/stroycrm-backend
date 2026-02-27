@@ -33,12 +33,32 @@ class SaleSerializer(serializers.ModelSerializer):
 
         sale = Sale.objects.create(status='pending', **validated_data)
         
+        # Deduct stock immediately on creation
+        from products.models import StockMovement
+        
         for item_data in items_data:
             product = item_data['product']
+            quantity = item_data['quantity']
+            
+            # Create SaleItem
             SaleItem.objects.create(
                 sale=sale, 
                 cost_price_at_sale=product.cost_price if product else 0,
                 **item_data
             )
+
+            if product:
+                # Stock Movement
+                StockMovement.objects.create(
+                    product=product,
+                    type='out',
+                    quantity=-quantity,
+                    user=validated_data.get('seller'),
+                    doc_number=sale.receipt_id,
+                    reason=f"Sotuv yaratildi (kutilmoqda): {sale.receipt_id}"
+                )
+                # Deduct Stock
+                product.stock -= quantity
+                product.save()
 
         return sale

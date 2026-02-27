@@ -54,25 +54,9 @@ class SaleViewSet(viewsets.ModelViewSet):
         sale.cashier = request.user
         sale.save()
 
-        # Business Logic: Update Stock & Debt
-        from products.models import StockMovement
+        # Business Logic: Update Debt (Stock already deducted on creation)
         from core.models import AuditLog
         from decimal import Decimal
-
-        for item in sale.items.all():
-            if item.product:
-                # Stock Movement
-                StockMovement.objects.create(
-                    product=item.product,
-                    type='out',
-                    quantity=-item.quantity,
-                    user=request.user,
-                    doc_number=sale.receipt_id,
-                    reason=f"Sotuv tasdiqlandi: {sale.receipt_id}"
-                )
-                # Deduct Stock
-                item.product.stock -= item.quantity
-                item.product.save()
 
         # Customer Debt
         if sale.payment_method == 'debt' and sale.customer:
@@ -107,7 +91,24 @@ class SaleViewSet(viewsets.ModelViewSet):
         sale.status = 'cancelled'
         sale.save()
 
-        return Response({'status': 'Buyurtma bekor qilindi.'})
+        # Return stock
+        from products.models import StockMovement
+        for item in sale.items.all():
+            if item.product:
+                # Stock Movement (Return)
+                StockMovement.objects.create(
+                    product=item.product,
+                    type='in',
+                    quantity=item.quantity,
+                    user=request.user,
+                    doc_number=sale.receipt_id,
+                    reason=f"Buyurtma bekor qilindi (Skladga qaytish): {sale.receipt_id}"
+                )
+                # Add back Stock
+                item.product.stock += item.quantity
+                item.product.save()
+
+        return Response({'status': 'Buyurtma bekor qilindi va mahsulotlar skladga qaytarildi.'})
 
 class SaleItemViewSet(viewsets.ModelViewSet):
     queryset = SaleItem.objects.all()
