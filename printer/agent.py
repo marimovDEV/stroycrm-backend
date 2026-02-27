@@ -66,17 +66,28 @@ def print_receipt(job_data):
         
         # Info block
         p._raw(b"\x1b\x61\x00")      # Left align
-        cashier = job_data.get('cashier', 'admin')
-        customer = job_data.get('customer') or 'Umumiy mijoz'
+        cashier = job_data.get('cashier') or job_data.get('seller_name') or job_data.get('seller') or 'admin'
+        customer = job_data.get('customer') or job_data.get('customer_name') or 'Umumiy mijoz'
         p.text(f"SOTUVCHI: {cashier}\n")
         p.text(f"MIJOZ: {customer}\n")
         
         p.text(line('.'))            # Dotted separator
         
-        date_str = job_data.get('date', datetime.now().strftime("%d.%m.%Y"))
+        # Determine Date and Time
+        created_at_raw = job_data.get('created_at')
+        if created_at_raw:
+            try:
+                dt = datetime.fromisoformat(created_at_raw.replace('Z', '+00:00'))
+                date_str = dt.strftime("%d.%m.%Y")
+            except:
+                date_str = job_data.get('date', datetime.now().strftime("%d.%m.%Y"))
+        else:
+            date_str = job_data.get('date', datetime.now().strftime("%d.%m.%Y"))
+            
+        receipt_id_val = job_data.get('check_id') or job_data.get('receipt_id') or job_data.get('id', '-')
         
         p.text(f"SANA: {date_str}\n")
-        p.text(f"CHEK " + chr(252) + f": {job_data.get('check_id', '-')}\n\n") # chr(252) => '№' symbol approximation if standard encoding or just print Number symbol string. fallback: No:
+        p.text(f"CHEK " + chr(252) + f": {receipt_id_val}\n\n")
         
         # Table Header
         p._raw(b"\x1b\x45\x01")      # Bold On
@@ -92,26 +103,18 @@ def print_receipt(job_data):
             quantity = float(item.get('quantity', 1))
             total = float(item.get('total', 0))
             
-            # Formatting line variables
             qty_str = str(int(quantity) if quantity.is_integer() else quantity)
             total_str = money(total) + " so'm"
             
-            # Print product name first
-            # Truncate or fit name
             if len(name) > WIDTH:
                 p.text(f"{name[:WIDTH]}\n")
             else:
                 p.text(f"{name}\n")
             
-            # Under it, we print quantity and total right aligned
-            # E.g: "               1      45 000 so'm"
             space_middle = WIDTH - len(qty_str) - len(total_str) - 2
             if space_middle < 1: space_middle = 1
             
-            calc_line = (" " * (WIDTH - space_middle - len(qty_str) - len(total_str))) + qty_str + (" " * space_middle) + total_str
-            # Try to push exact to right
             calc_line = (" " * max(0, WIDTH - len(qty_str) - len(total_str) - 4)) + qty_str + "    " + total_str
-            
             p.text(calc_line.rjust(WIDTH) + "\n")
             
         p.text(line('-'))
@@ -119,7 +122,8 @@ def print_receipt(job_data):
         p.text(line('-'))            # Double Line for grand totals
         
         # Grand Total
-        subtotal_str = f"{money(job_data.get('total_amount', 0))} so'm"
+        total_amt = float(job_data.get('total_amount', 0))
+        subtotal_str = f"{money(total_amt)} so'm"
         p._raw(b"\x1d\x21\x01")      # Double Height
         space = WIDTH - len("JAMI:") - len(subtotal_str)
         p.text(f"JAMI:{" " * max(1, space)}{subtotal_str}\n")
